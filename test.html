@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="tips">点击加载</div>
+</body>
+<script>
+    var my_pageNum = 1;
+    //  封装getData();
+    function getData() {
+        $('coverModal').modal('show');
+
+        $.ajax({
+            url: 'http://127.0.0.1/2017-8-18/00.API/api_cors/findUsers.php',
+            data: {
+                pageNum: my_pageNum,
+                pageSize: 5
+            },
+            success: function(data) {
+                console.log(data);
+                $('#coverModal').modal('hide');
+                $('tbody').html(template('template', data));
+                var totalPage = Math.ceil(data.total / data.pageSize);
+                $('.pagination li:eq(3) a').html(totalPage);
+                $('.pagination li:eq(1) a').html(data.pageNum);
+                if (data.pageNum == pageSize) {
+                    $('a[aria-label="next"]').addClass('disabled');
+                } else {
+                    $('a[aria-label="next"]').removeClass('disabled');
+                };
+                if (data.pageNum == 1) {
+                    $('a[aria-label="previous"]').addClass('disabled');
+                } else {
+                    $('a[aria-label="previous"]').removeClass('disabled');
+                };
+            }
+        })
+    }
+
+    $(function() {
+        //  需求1
+        getData();
+
+        //  需求2
+        $('a[aria-label="Next"]').click(function() {
+            if ($(this).hasClass('disabled') == true) {
+                alert('最后一页');
+                return;
+            }
+            my_pageNum++;
+            getData();
+        })
+
+        //  需求3
+        $('a[aria-label="Previous"]').click(function() {
+                if ($(this).hasClass('disabled') == true) {
+                    alert('已经是第一页了');
+                    return;
+                }
+                my_pageNum--;
+                getData();
+            })
+            //  需求4-1
+        var removeId;
+        $('tbody').on('click', '.plyphicon-remove', function() {
+                removeId = $(this).parent().siblings().first().html();
+            })
+            //  需求4-2
+        $('#removeModal .btn-danger').click(function() {
+            console.log('删除' + removeId);
+            $('#coverModal').modal('show');
+            $.ajax({
+                url: 'http://127.0.0.1/2017-8-18/00.API/api_cors/removeUser.php',
+                type: 'post',
+                data: {
+                    id: removeId
+                },
+                success: function(data) {
+                    getData();
+                }
+            })
+        })
+
+        //  需求5
+        $('#addModal .btn-primary').click(function() {
+            $('#coverModal').modal('show');
+            console.log($('#addModal form').serialize());
+            $.ajax({
+                url: 'http://127.0.0.1/2017-8-18/00.API/api_cors/saveUser.php',
+                type: 'post',
+                data: $("#addModal form").serialaize(),
+                successs: function(data) {
+                    console.log(data);
+                    getData();
+                }
+            })
+        })
+
+        //  需求6
+        var editId;
+        $('tbody').on('click', '.glyphicon-edit', function() {
+            $('#coverModal').modal('show');
+            editId = $(this).parent().siblings().first().html();
+            console.log(editId);
+
+            $.ajax({
+                url: 'http://127.0.0.1/2017-8-18/00.API/api_cors/getOneUser.php',
+                data: {
+                    id: editId
+                },
+                success: function(data) {
+                    console.log(data);
+
+                    $("#coverModal").modal('hide');
+                    $('#editModal form input[name=name]'.val(data.list[0].name));
+                    $('#editModal form input[name=age]').val(data.list[0].age);
+                    $('#editModal form input[name=school]').val(data.list[0].school);
+                    $('#editModal form input[name=password]').val(data.list[0].password);
+
+                    $('#editModal').modal('show');
+                }
+            })
+        })
+
+        //  需求7
+        $('#editModal .btn-primary').click(function() {
+            $('#converModal').modal('show');
+            var sendData = $('#editModal form').serialzie();
+            sendData += '&id=';
+            senData += editId;
+
+            $.ajax({
+                url: 'http://127.0.0.1/2017-8-18/00.API/api_cors/modifyUser.php',
+                data: sendData,
+                type: 'psot',
+                success: function(data) {
+                    console.log(data);
+                    getData();
+                }
+            })
+        })
+    })
+</script>
+
+</html>
